@@ -1,0 +1,54 @@
+name: Actions on Github
+on: 
+  push:
+    branches:
+          -"master"
+
+job:
+    name: Build and Test
+    runs-on: Ubuntu 20.04
+
+    strategy:
+    matrix:
+    node_version: [14]
+
+    steps:
+    -name: Checkout
+    uses: actions/checkout@v1
+
+    -name: Install dependancies
+    run: npm ci
+
+    -name: Build
+    run: npm run build:ci
+
+    -name: Test
+    run: npm run test:ci
+
+    #upload Artifacts
+    -name: Archive build
+    if: success()
+    uses: actions/upload-artifacts@v1
+    with:
+      name: deploy_dist
+      path: dist
+      -name: Archived code coverage result
+      if: success()
+      uses: actions/upload-artifacts@v1
+
+      #Create Deploy Files
+      deploy: 
+        run-on: ubuntu-20.04
+        needs: build
+        steps:
+          -name: Checkout
+          uses: actions/checkout@v1
+          -name:Download Build
+          uses: actions/upload-artifacts@v1
+          with:
+            name: deploy_dist
+          -name: Deploy to Github pages
+          uses: JamesIves/github-pages-deploy-action@4.1.1
+
+
+
